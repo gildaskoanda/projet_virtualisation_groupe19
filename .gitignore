@@ -1,0 +1,26 @@
+# --- Secrets (R7) : jamais versionnés ---
+.env
+*.pem
+*.key
+
+# --- Vagrant / VirtualBox ---
+.vagrant/
+*.box
+*-console.log
+
+# --- Fichiers générés par le Vagrantfile (source de vérité = Vagrantfile) ---
+config/noeuds.yml
+config/haproxy.cfg
+
+# --- Python / Node ---
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+
+# --- Éditeurs et OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
