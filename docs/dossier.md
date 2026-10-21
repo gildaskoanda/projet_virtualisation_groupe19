@@ -34,15 +34,15 @@ et se reconstruit d'un seul geste : `vagrant destroy -f && vagrant up`.
 |---------|------|---------|-----|
 | lb1 | HAProxy actif + keepalived | 192.168.XX.11 | 512 Mo |
 | lb2 | HAProxy passif + keepalived (E1) | 192.168.XX.12 | 512 Mo |
-| app1…appN | service Python sans état, :8080 | .21 … .2N | 512 Mo |
+| app1…appN | service Python sans état, :3000 | .21 … .2N | 512 Mo |
 | bdd1 | PostgreSQL 16 primaire | .31 | 768 Mo |
 | bdd2 | réplique en flux (hot standby) | .32 | 768 Mo |
 | obs | Prometheus + Grafana + ab | .41 | 768 Mo |
-| **VIP** | adresse flottante VRRP | .10 | — |
+| **VIP** | adresse flottante VRRP | .5 | — |
 
-Sous-réseau `[À CONFIRMER AVEC L'ENSEIGNANT — groupe 19]`, surchargeable
-via `RESEAU=192.168.XX.0 vagrant up`. Plage imposée par VirtualBox ≥ 6.1.28 :
-192.168.56.0–63.255.
+Sous-réseau : `192.168.58.0/24` (règle `X = 55 + G` avec G = 3 : notre groupe
+porte le numéro 19, hors de la plage 1 à 8 prévue par le sujet). Plage imposée
+par VirtualBox ≥ 6.1.28 : 192.168.56.0–63.255.
 
 ### 3.2 Schéma
 
@@ -50,14 +50,14 @@ via `RESEAU=192.168.XX.0 vagrant up`. Plage imposée par VirtualBox ≥ 6.1.28 :
         Hôte
          │ :8080 (seul port transféré, R8)
          ▼
-   ┌──────────┐   VRRP VIP .10    ┌──────────┐
+   ┌──────────┐   VRRP VIP .5     ┌──────────┐
    │   lb1    │◄─────────────────►│   lb2    │
    │ HAProxy  │   keepalived      │ HAProxy  │
    └────┬─────┘                   └────┬─────┘
         │ sonde /sante toutes les 2 s  │
    ┌────┴─────────┬────────────────────┴────┐
    ▼              ▼                         ▼
- app1:8080 … appN:8080                 obs:9090/3000
+ app1:3000 … appN:3000                 obs:9090/3000
    │ SELECT / INSERT                      │ scrape :9100, :8404
    ▼                                      ▼
  bdd1:5432 ── réplication en flux ──► bdd2:5432   Prometheus+Grafana
@@ -76,9 +76,9 @@ chaud (`reload`, sans coupure).
 
 ## 4. Détail technique
 
-### 4.1 Application (`app/app.py`, ~90 lignes)
+### 4.1 Application (`app/app.py`, moins de 100 lignes)
 
-Python 3 + psycopg2, `ThreadingHTTPServer` sur `0.0.0.0:8080`. Trois
+Python 3 + psycopg2, `ThreadingHTTPServer` sur `0.0.0.0:3000`. Trois
 routes : `/resultat?matricule=` (JSON), `/sante` (200 si `SELECT 1`
 réussit, 503 sinon — jamais 200 par principe), `/info` (hôte).
 **Aucun état local** : chaque requête ouvre sa connexion. Une base
@@ -88,17 +88,21 @@ absente au démarrage ne bloque donc rien : le service démarre et renvoie
 ### 4.2 Provisionnement idempotent (R2)
 
 Chaque script rejouable : gardes `grep -q ||` avant toute ligne
-ajoutée (pg_hba), `CREATE … IF NOT EXISTS`-style via requêtes système,
-fichiers **réécrits entiers** (jamais `>>` accumulateur), `systemctl
-enable --now` sans effet la deuxième fois, basebackup bdd2 ignoré si
-déjà réplique, jeu de données déterministe (50 000 lignes identiques à
-chaque exécution). `vagrant provision` rejoué deux fois de suite ne
+ajoutée (pg_hba), fichiers de configuration comparés puis écrits
+seulement s'ils changent (`ecrire_si_different`), services redémarrés
+seulement en cas de changement, `CREATE TABLE IF NOT EXISTS` et jeu de
+données inséré une seule fois (50 000 lignes déterministes),
+basebackup de bdd2 protégé par un fichier témoin : un
+re-provisionnement n'efface jamais une réplique promue. `vagrant provision` rejoué deux fois de suite ne
 modifie rien et n'échoue pas.
 
 ### 4.3 Réplication et bascule (R5, R6)
 
 bdd1 : `wal_level=replica`, rôle `replique` avec `REPLICATION`, pg_hba
-limité à `bdd2/32`. bdd2 : `pg_basebackup -R -X stream` (standby.signal
+limité au réseau privé (`bdd2/32` pour la réplication). bdd2 reçoit les
+mêmes règles pour les applications : `pg_hba.conf` n'est pas copié par
+`pg_basebackup`, sans elles bdd2 refuserait les applications après la
+promotion. bdd2 : `pg_basebackup -R -X stream` (standby.signal
 + primary_conninfo), `hot_standby` actif. Bascule
 (`scripts/bascule.sh`, chronométrée) : promotion de bdd2
 (`pg_ctlcluster promote`), passage de `DB_HOST` vers bdd2 sur chaque app
@@ -109,8 +113,9 @@ de `/sante` via la VIP. Temps total mesuré : `[À MESURER]` s.
 
 HAProxy généré par `rafraichir-haproxy` depuis `noeuds.tsv` :
 `balance roundrobin`, `option httpchk GET /sante`,
-`http-check expect status 200`, `default-server inter 2s fall 2 rise 2`
-→ éjection théorique en 4 s max (< 5 s exigé). Réponse 503 en JSON via
+`http-check expect status 200`, `default-server inter 1s fastinter 500ms fall 2 rise 2`,
+`timeout connect 1s`, `timeout check 1s`, `option redispatch`
+→ éjection attendue en 3 à 4 s (< 5 s exigé), à confirmer par la mesure V2. Réponse 503 en JSON via
 `errorfile` (V4 : jamais de page blanche). Front métriques :8404
 (`prometheus-exporter`) pour E2.
 
@@ -118,7 +123,7 @@ HAProxy généré par `rafraichir-haproxy` depuis `noeuds.tsv` :
 
 lb1 et lb2 exécutent la **même** HAProxy et le **même** keepalived
 (`state BACKUP`, priorités 110/100, `vrrp_script` sur `pgrep haproxy`,
-VIP `XX.10/24`). Bascule ≤ 5 s si lb1 tombe : mesure `[À MESURER]` s.
+VIP `XX.5/24`, mot de passe VRRP lu dans `.env`). Bascule ≤ 5 s si lb1 tombe : mesure `[À MESURER]` s.
 
 ### 4.6 Observabilité (E2)
 

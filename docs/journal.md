@@ -40,8 +40,12 @@ tracée par l'historique Git.*
 | Difficulté | Solution |
 |------------|----------|
 | Poste Windows de développement sans droits admin : VirtualBox/Wagrant impossibles | bascule du développement sur un poste Ubuntu 24.04 avec KVM ; le dépôt reste conforme VirtualBox pour la démonstration |
-| Règle de sous-réseau du PDF (`X=55+G`) incompatible avec un numéro de groupe 19 (plage 56–63 saturée) | variable `RESEAU` surchargeable — à régler avec l'enseignant avant la démonstration |
+| Règle de sous-réseau du PDF (`X=55+G`) incompatible avec un numéro de groupe 19 (G de 1 à 8 seulement) | décision du groupe : sous-réseau du groupe 3 (`GROUPE=3`, 192.168.58.0/24), validé par le Vagrantfile (1 à 8) — à confirmer avec l'enseignant |
 | Mise à jour du répartiteur quand `NB_APP` change sans reprovisionner lb | déclencheur Vagrant `after :up` + script `rafraichir-haproxy` (`reload` à chaud) |
+| Revue croisée de la branche d'intégration : après la promotion, bdd2 aurait refusé les applications (`pg_hba.conf` n'est pas copié par `pg_basebackup`) | mêmes règles `pg_hba` ajoutées dans `replique.sh` |
+| Revue croisée : la réplique était refaite à chaque `vagrant provision` (mauvais chemin de `postgresql.auto.conf`), au risque d'effacer une primaire promue | fichier témoin `.replique-initialisee` |
+| Revue croisée : le test V1 n'extrayait rien (JSON avec espace) ; `noeuds.tsv` en CRLF sous Windows aurait cassé keepalived | extraction tolérante, JSON compact, `File.binwrite` |
+| Revue croisée : mot de passe VRRP écrit en clair dans `lb.sh` (R7) | variable `VRRP_PASS` dans `.env` |
 | `[à compléter au fil des tests]` | |
 
 ## Chronologie

@@ -4,96 +4,101 @@ Plateforme de consultation des résultats d'examens par matricule. Toute
 l'infrastructure est décrite en code et se reconstruit d'un seul geste :
 `vagrant destroy -f && vagrant up`.
 
+*Groupe 19 — M1 Informatique, IBAM / UJKZ — réseau du groupe 3 (192.168.58.0/24).*
+
 ## Exigences couvertes
 
 | N°  | Exigence | Où |
 |-----|----------|-----|
 | R1  | Reconstruction intégrale | `tests/v5_reconstruction.sh` |
-| R2  | Idempotence du provisionnement | scripts idempotents (rejouer `vagrant provision` sans effet) |
-| R3  | Nombre d'apps paramétrable, config engendrée | `NB_APP=4 vagrant up` + déclencheur de mise à jour du répartiteur |
-| R4  | Sonde /sante, éjection < 5 s | HAProxy `inter 2s fall 2` sur `GET /sante` |
+| R2  | Idempotence du provisionnement | scripts rejouables : `vagrant provision` deux fois de suite ne change rien (fichiers comparés avant écriture, témoin pour la réplique) |
+| R3  | Nombre d'apps paramétrable, config engendrée | `NB_APP` + `config/noeuds.tsv` engendré par le Vagrantfile |
+| R4  | Sonde /sante, éjection < 5 s | HAProxy : `GET /sante`, `inter 1s fastinter 500ms fall 2`, `timeout check 1s` |
 | R5  | Réplication en flux bdd1 → bdd2 | `scripts/replique.sh` (basebackup -R) |
 | R6  | Bascule chronométrée | `scripts/bascule.sh` + `tests/v4_bascule_bdd.sh` |
-| R7  | Aucun secret en clair | `.env` ignoré, `.env.exemple` versionné |
-| R8  | Réseau privé, un seul port hôte | port 8080 → lb1 uniquement (VirtualBox) |
+| R7  | Aucun secret en clair | `.env` ignoré par Git, `.env.exemple` versionné (mots de passe BDD, Grafana, VRRP) |
+| R8  | Réseau privé, un seul port hôte | port 8080 → lb1 uniquement ; PostgreSQL écoute sur l'IP privée |
 
-Extensions réalisées : **E1** (répartiteur redondant, keepalived/VRRP,
-VIP `.10`) et **E2** (Prometheus + Grafana + node_exporter + métriques
-HAProxy natives).
+Extensions : **E1** (répartiteur redondant, keepalived/VRRP, VIP `.5`) et
+**E2** (Prometheus + Grafana + node_exporter + métriques HAProxy natives).
 
-## Prérequis
+## Prérequis (poste Windows 11 ou Linux)
 
-- **Parcours évaluation (imposé)** : poste avec VirtualBox + Vagrant,
-  8 Go de RAM libres. Boîte épinglée `bento/ubuntu-24.04` `202502.21.0`.
-- **Parcours développement (KVM)** : Ubuntu avec `vagrant-libvirt`
-  (`vagrant plugin install vagrant-libvirt`) : le même Vagrantfile et la
-  même boîte fonctionnent via libvirt. Aucun port n'est transféré dans ce
-  mode : la plateforme s'adresse directement par la VIP sur le réseau privé.
+- **VirtualBox** et **Vagrant**, 8 Go de RAM (le socle seul tient dans 3 Go).
+- **Git** (sous Windows : Git Bash). Sous Windows, désactiver Hyper-V /
+  « Plateforme de machine virtuelle » si VirtualBox est lent ou refuse de démarrer.
+- Boîte épinglée `bento/ubuntu-24.04` version `202502.21.0`, téléchargée au premier `vagrant up`.
 
 ## Démarrage
 
 ```bash
-git clone <ce-dépot> && cd projet_virtualisation_groupe19
-cp .env.exemple .env        # facultatif : engendré automatiquement au 1er up
-vagrant up                  # 7 machines : bdd1 bdd2 app1 app2 lb1 lb2 obs
+git clone https://github.com/rootman147/Projet_virtualisation_groupe19.git
+cd Projet_virtualisation_groupe19
+vagrant up        # le fichier .env est engendré au premier lancement
 ```
 
-Service : `http://192.168.56.10/` (VIP) — ou `http://localhost:8080/`
-(VirtualBox uniquement, via lb1).
+Par défaut, `vagrant up` démarre **7 machines** (socle + extensions, environ
+4,4 Go de RAM). Pour travailler avec le socle seul (5 machines, 3 Go) :
+mettre `EXTENSIONS=0` dans `.env`. Les extensions se démarrent ensuite à
+la demande : `EXTENSIONS=1 vagrant up lb2 obs`.
+
+Service (réseau du groupe 3) :
 
 ```bash
-curl "http://192.168.56.10/resultat?matricule=100001"
-curl http://192.168.56.10/sante
-curl http://192.168.56.10/info
+curl "http://192.168.58.5/resultat?matricule=100001"   # via la VIP
+curl http://192.168.58.5/sante
+curl http://192.168.58.5/info
+curl http://localhost:8080/info                          # via lb1 seul
 ```
 
-Grafana : `http://192.168.56.41:3000` (utilisateur `admin`, mot de passe
-dans `.env`).
+Grafana : `http://192.168.58.41:3000` (utilisateur `admin`, mot de passe `GRAFANA_MDP` dans `.env`).
 
-## Paramètres (variables d'environnement)
+## Paramètres (fichier `.env`, ou variable d'environnement qui l'emporte)
 
 | Variable | Défaut | Rôle |
 |----------|--------|------|
-| `NB_APP` | 2 | nombre de serveurs applicatifs — `NB_APP=4 vagrant up` suffit (R3) |
-| `GROUPE` | 1 | numéro de groupe → sous-réseau `192.168.{55+G}.0/24` |
-| `RESEAU` | selon GROUPE | sous-réseau complet, pour les attributions hors règle 55+G |
+| `GROUPE` | 3 | de 1 à 8 : sous-réseau `192.168.(55+GROUPE).0/24` (plage VirtualBox 56 à 63) |
+| `NB_APP` | 2 | nombre de serveurs applicatifs, de 2 à 9 (R3) |
+| `EXTENSIONS` | 1 | 1 = lb2 et obs démarrent aussi ; 0 = socle seul |
+| `DB_*`, `GRAFANA_MDP`, `VRRP_PASS` | aléatoires | secrets, jamais versionnés |
 
-> **Point à confirmer avec l'enseignant** : la règle `X = 55 + G` du
-> cahier des charges ne couvre que les groupes 1 à 8 (plage autorisée par
-> VirtualBox : 192.168.56.0–63.255). Pour un groupe 19, demander le
-> sous-réseau attribué puis l'utiliser via `RESEAU=192.168.XX.0 vagrant up`.
+> Notre groupe porte le numéro 19, mais la règle du sujet (`X = 55 + G`)
+> n'accepte que G de 1 à 8 : nous utilisons le sous-réseau du groupe 3.
 
 ## Scénarios de validation (depuis la racine du dépôt)
 
 ```bash
 bash tests/v1_repartition.sh      # 20 appels /info, écart < 20 %
-bash tests/v2_panne_app.sh        # vagrant halt app1 sous charge
-bash tests/v3_charge.sh           # ab -n 2000 -c 50 en N=2 puis N=4
+bash tests/v2_panne_app.sh        # vagrant halt app1 sous consultations continues
+bash tests/v3_charge.sh           # ab -n 2000 -c 50 en N=2 puis N=4 (ab sur l'hôte ou sur obs)
 bash tests/v4_bascule_bdd.sh      # panne bdd1 + bascule chronométrée
 bash tests/v5_reconstruction.sh   # destroy -f puis up, durée mesurée
-bash tests/v6_panne_lb.sh         # vagrant halt lb1, bascule VRRP (E1)
+bash tests/v6_panne_lb.sh         # vagrant halt lb1, bascule VRRP (E1, EXTENSIONS=1)
 ```
 
 ## Procédure d'exploitation
 
-- **Ajouter un serveur applicatif** : `NB_APP=5 vagrant up` — le
-  répartiteur est reconfiguré automatiquement (déclencheur + script
-  `rafraichir-haproxy`), sans redémarrage.
+- **Ajouter un serveur applicatif** : `NB_APP=4 vagrant up`. Un déclencheur
+  recharge à chaud les répartiteurs déjà démarrés. Si le déclencheur n'a
+  pas agi (message d'erreur), la commande de repli est
+  `NB_APP=4 vagrant provision lb1 lb2` (idempotente).
 - **Bascule de base (R6)** : après `vagrant halt bdd1`, exécuter
-  `bash scripts/bascule.sh` — promotion de bdd2, rebasement des
+  `bash scripts/bascule.sh` : promotion de bdd2, rebasement des
   applications, temps total affiché. Retour à la normale :
   `vagrant destroy -f && vagrant up`.
+- **Secrets** : ne jamais ajouter `.env` à Git ; `git ls-files | grep env`
+  ne doit afficher que `.env.exemple`.
 
 ## Architecture
 
-| Machine | Rôle | Adresse |
+| Machine | Rôle | Adresse (groupe 3) |
 |---------|------|---------|
-| lb1, lb2 | HAProxy + keepalived (VIP partagée `.10`) | `.11`, `.12` |
-| app1…appN | Python/psycopg2, sans état, port 8080 | `.21`…`.2N` |
+| lb1, lb2 | HAProxy + keepalived (VIP partagée `.5`) | `.11`, `.12` |
+| app1…appN | Python/psycopg2, sans état, port 3000 | `.21`…`.2N` |
 | bdd1 | PostgreSQL 16 primaire | `.31` |
 | bdd2 | Réplique en flux (hot standby) | `.32` |
 | obs | Prometheus + Grafana (+ `ab`) | `.41` |
 
 Source unique de vérité : la table `NOEUDS` du `Vagrantfile` engendre
 `config/noeuds.tsv`, lu par les scripts du répartiteur et de la
-supervision — aucune adresse applicative n'est écrite en dur ailleurs.
+supervision. Aucune adresse applicative n'est écrite en dur ailleurs.
