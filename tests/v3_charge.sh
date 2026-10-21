@@ -5,9 +5,21 @@
 # proportionnel et peut même être nul ; c'est un résultat à commenter.
 . "$(dirname "$0")/_lib.sh"
 
-mesure() {  # mesure <légende>
-  vagrant ssh obs -c "ab -n 2000 -c 50 -q 'http://${VIP}/resultat?matricule=100001' 2>/dev/null" \
-    | tee /tmp/v3_ab.txt | grep -E 'Requests per second|Failed requests|Time taken'
+# ab sur l'hôte s'il est installé, sinon sur la machine obs (EXTENSIONS=1).
+lancer_ab() {
+  local url="http://${VIP}/resultat?matricule=100001"
+  if command -v ab >/dev/null 2>&1; then
+    ab -n 2000 -c 50 -q "$url" 2>/dev/null
+  elif vagrant status obs 2>/dev/null | grep -q 'running'; then
+    vagrant ssh obs -c "ab -n 2000 -c 50 -q '$url' 2>/dev/null" | tr -d '\r'
+  else
+    echo "ERREUR : ni 'ab' sur l'hôte, ni la machine obs démarrée (EXTENSIONS=1)." >&2
+    return 1
+  fi
+}
+
+mesure() {
+  lancer_ab | tee /tmp/v3_ab.txt | grep -E 'Requests per second|Failed requests|Time taken'
   grep 'Requests per second' /tmp/v3_ab.txt | awk '{print $4}'
 }
 
@@ -24,7 +36,7 @@ if [ "$NB_APP" -lt 4 ]; then
   # de la visibilité des 4 serveurs.
   for _ in $(seq 1 30); do
     vus=$(for _ in $(seq 1 12); do curl -s --max-time 2 "http://${VIP}/info"; done \
-          | grep -o '"hote":"[^"]*"' | sort -u | wc -l | tr -d ' ')
+          | grep -o '"hote": *"[^"]*"' | sort -u | wc -l | tr -d ' ')
     [ "$vus" -ge 4 ] && break
     sleep 2
   done

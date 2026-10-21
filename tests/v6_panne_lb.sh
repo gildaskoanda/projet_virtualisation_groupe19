@@ -6,6 +6,9 @@
 
 note "V6 — arrêt de lb1 pendant une sonde continue sur la VIP ${VIP}"
 
+if ! awk -F'\t' '$1 == "lb2"' config/noeuds.tsv | grep -q .; then
+  echo "ERREUR : lb2 absent (EXTENSIONS=0). V6 demande l'extension E1 : EXTENSIONS=1 vagrant up lb2"; exit 1
+fi
 if ! vagrant status lb1 | grep -q 'running'; then
   echo "ERREUR : lb1 n'est pas démarré."; exit 1
 fi

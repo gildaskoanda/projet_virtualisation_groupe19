@@ -7,8 +7,13 @@
 note "V1 — répartition sur ${NB_APP} serveurs applicatifs (VIP ${VIP})"
 
 for _ in $(seq 1 20); do
-  curl -s --max-time 3 "http://${VIP}/info" | sed -n 's/.*"hote":"\([^"]*\)".*/\1/p'
+  curl -s --max-time 3 "http://${VIP}/info" | sed -n 's/.*"hote": *"\([^"]*\)".*/\1/p'
 done > /tmp/v1_hotes.txt
+
+if [ ! -s /tmp/v1_hotes.txt ]; then
+  echo "RÉSULTAT V1 : ÉCHEC (aucune réponse de /info via ${VIP})"
+  exit 1
+fi
 
 echo "--- Distribution des 20 réponses ---"
 sort /tmp/v1_hotes.txt | uniq -c | sort -rn

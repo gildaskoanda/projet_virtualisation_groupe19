@@ -20,7 +20,7 @@
         "overrides": []
       },
       "targets": [
-        { "expr": "sum(rate(haproxy_frontend_requests_total[1m]))", "legendFormat": "total", "refId": "A" }
+        { "expr": "sum(rate(haproxy_frontend_http_requests_total{proxy=\"http_front\"}[30s]))", "legendFormat": "total", "refId": "A" }
       ]
     },
     {

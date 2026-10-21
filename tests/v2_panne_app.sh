@@ -4,7 +4,7 @@
 # 5 secondes. Mesure : requêtes perdues + durée de la période dégradée.
 . "$(dirname "$0")/_lib.sh"
 
-note "V2 — arrêt de app1 pendant une sonde continue via le répartiteur"
+note "V2 — arrêt de app1 pendant des consultations continues (/resultat) via le répartiteur"
 
 if ! vagrant status app1 | grep -q 'running'; then
   echo "ERREUR : app1 n'est pas démarrée."; exit 1
@@ -13,7 +13,7 @@ fi
 SONDE_DUREE=25
 (
   for i in $(seq 1 $((SONDE_DUREE * 4))); do
-    printf '%s %s\n' "$(date +%s)" "$(http_code "http://${VIP}/sante")"
+    printf '%s %s\n' "$(date +%s)" "$(http_code "http://${VIP}/resultat?matricule=100001")"
     sleep 0.25
   done
 ) > /tmp/v2.csv &
