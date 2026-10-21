@@ -13,7 +13,9 @@ Vagrantfile text eol=lf
 *.service   text eol=lf
 *.py        text eol=lf
 *.js        text eol=lf
-*.md        text eol=lf
+*.md       text eol=lf
+*.sql      text eol=lf
+*.json     text eol=lf
 .env.exemple text eol=lf
 
 # Fichiers binaires : ne jamais toucher
