@@ -10,6 +10,7 @@
 
 # --- Fichiers générés par le Vagrantfile (source de vérité = Vagrantfile) ---
 config/noeuds.yml
+config/noeuds.tsv
 config/haproxy.cfg
 
 # --- Python / Node ---
