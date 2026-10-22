@@ -1,4 +1,4 @@
- # RÉSULTATS-BF — infrastructure résiliente et scalable sous Vagrant
+# RÉSULTATS-BF — infrastructure résiliente et scalable sous Vagrant
 
 Plateforme de consultation des résultats d'examens par matricule. Toute
 l'infrastructure est décrite en code et se reconstruit d'un seul geste :
