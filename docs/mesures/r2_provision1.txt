@@ -1,0 +1,25 @@
+==> lb1: Running provisioner: file...
+    lb1: scripts/lib/lib.sh => /tmp/lib.sh
+==> lb1: Running provisioner: file...
+    lb1: config/noeuds.tsv => /tmp/noeuds.tsv
+==> lb1: Running provisioner: shell...
+    lb1: Running: C:/Users/HP/AppData/Local/Temp/vagrant-shell20261023-9456-v2tidu.sh
+    lb1: [resultats-bf] lb1 — installation des paquets communs (node_exporter, curl)
+    lb1: Synchronizing state of prometheus-node-exporter.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+    lb1: Executing: /usr/lib/systemd/systemd-sysv-install enable prometheus-node-exporter
+    lb1: [resultats-bf] lb1 — base OK
+==> lb1: Running provisioner: shell...
+    lb1: Running: C:/Users/HP/AppData/Local/Temp/vagrant-shell20261023-9456-rabvq.sh
+    lb1: [resultats-bf] lb1 — installation de HAProxy + keepalived
+    lb1: haproxy : configuration inchangee
+    lb1: Synchronizing state of haproxy.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+    lb1: Executing: /usr/lib/systemd/systemd-sysv-install enable haproxy
+    lb1: Synchronizing state of keepalived.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+    lb1: Executing: /usr/lib/systemd/systemd-sysv-install enable keepalived
+    lb1: [resultats-bf] lb1 — keepalived : configuration inchangee
+    lb1: [resultats-bf] lb1 — lb OK — VIP 192.168.58.5 (priorité 110)
+==> app1: Running provisioner: file...
+The SSH connection was unexpectedly closed by the remote end. This
+usually indicates that SSH within the guest machine was unable to
+properly start up. Please boot the VM in GUI mode to check whether
+it is booting properly.

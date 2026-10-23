@@ -1,0 +1,14 @@
+=== APRES
+a319d2c5bc7a0cb4a9699ea935f759ea  /etc/haproxy/haproxy.cfg
+26ddc7af381b44197b4f15e2fcd9091a  /etc/keepalived/keepalived.conf
+82210085a9117785de18bbaaa28af81d  /etc/postgresql/16/main/conf.d/resultats.conf
+e465fb43e6cdb5df4e6f9921b9ec33fd  /etc/postgresql/16/main/pg_hba.conf
+fa076e30f69201b6f9e3f2413b5db9f6  /etc/postgresql/16/main/conf.d/resultats.conf
+d9146650318079251e5e3fbba8de1e92  /etc/postgresql/16/main/pg_hba.conf
+2026-10-22 08:31:22.102795+00
+2026-10-22 08:39:14.840333+00
+grep: /etc/postgresql/16/main/pg_hba.conf: Permission denied
+50000
+--- pg_hba : nombre de blocs resultats-bf (attendu : 1)
+1
+1
