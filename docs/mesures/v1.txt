@@ -1,0 +1,10 @@
+
+=== V1 — répartition sur 2 serveurs applicatifs (VIP 192.168.58.5) ===
+--- Distribution des 20 réponses ---
+     10 app2
+     10 app1
+--- Ordre des réponses ---
+app1 app2 app1 app2 app1 app2 app1 app2 app1 app2 app1 app2 app1 app2 app1 app2 app1 app2 app1 app2 
+
+Serveurs vus : 2 / 2 — écart max : 0 % (exigence < 20 %)
+RÉSULTAT V1 : OK
