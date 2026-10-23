@@ -1,0 +1,7 @@
+f
+888888
+INSERT 0 1
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0100     81 100     81   0      0    433      0                              0100     81 100     81   0      0    432      0                              0100     81 100     81   0      0    431      0                              0
+{"matricule":888888,"nom":"Test bascule","serie":"D","moyenne":11.0,"admis":true}

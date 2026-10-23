@@ -1,0 +1,17 @@
+
+=== V4 — panne de bdd1, puis bascule sur bdd2 ===
+Avant panne : /sante -> 200 (attendu : 200)
+==> bdd1: Attempting graceful shutdown of VM...
+Après la panne : /sante -> 503 (attendu : 503)
+
+-> exécution de la procédure de bascule chronométrée
+=== Bascule RÉSULTATS-BF : primaire bdd1 -> 192.168.58.32 (bdd2) ===
+[1/2] promotion de bdd2 en primaire
+      bdd2 est désormais primaire
+[2/2] pointage des applications vers 192.168.58.32 + redémarrage
+      app1 rebasculé
+      app2 rebasculé
+[+] vérification de la sonde de santé via le répartiteur
+=== Bascule terminée en 74 secondes — /sante renvoie 200 ===
+Après bascule : /sante -> 200 (attendu : 200)
+RÉSULTAT V4 : OK
