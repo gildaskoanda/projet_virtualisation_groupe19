@@ -1,0 +1,9 @@
+
+=== V6 — arrêt de lb1 pendant une sonde continue sur la VIP 192.168.58.5 ===
+-> vagrant halt lb1
+==> lb1: Attempting graceful shutdown of VM...
+
+Réponses en erreur     : 1 (≠200)
+Reprise de la VIP      : 0 s après l'arrêt (exigence < 5 s)
+-> remise en service de lb1
+RÉSULTAT V6 : OK
