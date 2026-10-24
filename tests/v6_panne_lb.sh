@@ -1,8 +1,20 @@
 #!/usr/bin/env bash
 # V6 — Panne du répartiteur actif (extension E1) : vagrant halt lb1.
-# Exigence : le service reste joignable à la même adresse (la VIP), en
-# moins de 5 secondes. Mesure : temps de reprise après bascule VRRP.
+# Exigence : le service reste joignable à la même adresse (la VIP), en moins
+# de 5 secondes. Mesure : durée de l'interruption visible pour un client.
+#
+# La reprise se mesure à partir de la PREMIÈRE ERREUR observée après l'ordre
+# d'arrêt (pas à partir de l'ordre lui-même : lb1 répond encore pendant son
+# arrêt « propre »). Sans erreur, aucune interruption n'a été vue.
+#
+# Réglages : V6_APRES (défaut 15) = secondes d'observation après l'arrêt ;
+#            V6_FORCE=1 = coupure brutale (vagrant halt -f), pire cas : lb1
+#            n'annonce pas son départ, lb2 doit le déduire des annonces VRRP.
 . "$(dirname "$0")/_lib.sh"
+
+APRES=${V6_APRES:-15}
+ARRET=(vagrant halt lb1)
+[ "${V6_FORCE:-0}" = 1 ] && ARRET=(vagrant halt -f lb1)
 
 note "V6 — arrêt de lb1 pendant une sonde continue sur la VIP ${VIP}"
 
@@ -13,40 +25,58 @@ if ! vagrant status lb1 | grep -q 'running'; then
   echo "ERREUR : lb1 n'est pas démarré."; exit 1
 fi
 
+rm -f /tmp/v6.csv /tmp/v6.stop
+# Sonde continue : « epoch.fraction code », environ 5 requêtes par seconde.
 (
-  for _ in $(seq 1 80); do
-    printf '%s %s\n' "$(date +%s)" "$(http_code "http://${VIP}/sante")"
-    sleep 0.25
+  while [ ! -f /tmp/v6.stop ]; do
+    c=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 "http://${VIP}/sante" || true)
+    printf '%s %s\n' "$(date +%s.%N)" "$c"
+    sleep 0.2
   done
 ) > /tmp/v6.csv &
 SONDE=$!
 
-sleep 3
-echo "-> vagrant halt lb1"
-T_HALT=$(date +%s)
-vagrant halt lb1
-wait $SONDE
+sleep 4
+echo "-> ${ARRET[*]}"
+T_HALT=$(date +%s.%N)
+"${ARRET[@]}"
+T_FIN=$(date +%s.%N)
+echo "   arrêt terminé en $(awk -v a="$T_HALT" -v b="$T_FIN" 'BEGIN { printf "%.0f", b - a }') s"
+sleep "$APRES"
+touch /tmp/v6.stop
+wait "$SONDE" || true
 
-erreurs=$(awk '$2 != 200 { n++ } END { print n+0 }' /tmp/v6.csv)
-premiere=$(awk '$2 == 200 && $1 > t { print $1; exit } { t = t ? t : $1 }' /tmp/v6.csv)
-# reprise = première réponse 200 APRÈS l'arrêt de lb1
-reprise=$(awk -v th="$T_HALT" '$2 == 200 && $1 >= th { print $1; exit }' /tmp/v6.csv)
-if [ -n "$reprise" ]; then
-  delai=$((reprise - T_HALT))
-else
-  delai=-1
-fi
+total=$(wc -l < /tmp/v6.csv | tr -d ' ')
+erreurs=$(awk -v th="$T_HALT" '$1 >= th && $2 != 200 { n++ } END { print n+0 }' /tmp/v6.csv)
+premiere=$(awk -v th="$T_HALT" '$1 >= th && $2 != 200 { print $1; exit }' /tmp/v6.csv)
 
 echo
-echo "Réponses en erreur     : ${erreurs} (≠200)"
-echo "Reprise de la VIP      : ${delai} s après l'arrêt (exigence < 5 s)"
+echo "Mode d'arrêt              : ${ARRET[*]}"
+echo "Réponses totales          : ${total}"
+echo "Réponses en erreur (après l'ordre d'arrêt) : ${erreurs}"
 
+verdict="OK"
+if [ -z "$premiere" ]; then
+  echo "Interruption visible      : aucune (la VIP est restée joignable)"
+else
+  reprise=$(awk -v te="$premiere" '$1 > te && $2 == 200 { print $1; exit }' /tmp/v6.csv)
+  if [ -z "$reprise" ]; then
+    echo "Interruption visible      : sans reprise pendant l'observation"
+    verdict="ECHEC"
+  else
+    duree=$(awk -v a="$premiere" -v b="$reprise" 'BEGIN { printf "%.1f", b - a }')
+    echo "Première erreur           : $(awk -v a="$premiere" -v b="$T_HALT" 'BEGIN { printf "%.1f", a - b }') s après l'ordre d'arrêt"
+    echo "Interruption visible      : ${duree} s (exigence < 5 s)"
+    awk -v d="$duree" 'BEGIN { exit !(d < 5) }' || verdict="ECHEC"
+  fi
+fi
+
+echo "VIP portée par lb2        : $(vagrant ssh lb2 -c "ip -4 addr show | grep -c ${VIP}" 2>/dev/null | tr -d '\r') (attendu : 1)"
 echo "-> remise en service de lb1"
-vagrant up lb1 >/dev/null
+vagrant up lb1 >/dev/null 2>&1 || vagrant up lb1
 
-if [ "$delai" -ge 0 ] && [ "$delai" -lt 5 ]; then
+if [ "$verdict" = "OK" ]; then
   echo "RÉSULTAT V6 : OK"
 else
-  echo "RÉSULTAT V6 : À EXAMINER (délai=${delai}s, erreurs=${erreurs})"
-  exit 1
+  echo "RÉSULTAT V6 : ÉCHEC"; exit 1
 fi

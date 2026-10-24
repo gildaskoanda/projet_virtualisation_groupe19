@@ -18,14 +18,18 @@ lancer_ab() {
   fi
 }
 
+# mesure <N> : affiche le résumé brut d'ab (sur la sortie d'erreur, donc visible),
+# conserve la sortie complète dans docs/mesures/ et renvoie le débit.
 mesure() {
-  lancer_ab | tee /tmp/v3_ab.txt | grep -E 'Requests per second|Failed requests|Time taken'
+  mkdir -p docs/mesures
+  lancer_ab | tee /tmp/v3_ab.txt | grep -E 'Requests per second|Failed requests|Time taken|Non-2xx' >&2
+  cp /tmp/v3_ab.txt "docs/mesures/v3_ab_N$1.txt"
   grep 'Requests per second' /tmp/v3_ab.txt | awk '{print $4}'
 }
 
 note "V3 — test de charge sur ${NB_APP} serveurs (ab -n 2000 -c 50)"
 echo "--- N = ${NB_APP} ---"
-R2=$(mesure | tail -1)
+R2=$(mesure "$NB_APP" | tail -1)
 echo "Débit mesuré (N=${NB_APP}) : ${R2} req/s"
 
 if [ "$NB_APP" -lt 4 ]; then
@@ -44,7 +48,7 @@ if [ "$NB_APP" -lt 4 ]; then
 fi
 
 echo "--- N = 4 ---"
-R4=$(mesure | tail -1)
+R4=$(mesure 4 | tail -1)
 echo "Débit mesuré (N=4) : ${R4} req/s"
 
 echo
