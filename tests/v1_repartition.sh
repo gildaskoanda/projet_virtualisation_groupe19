@@ -6,8 +6,11 @@
 
 note "V1 — répartition sur ${NB_APP} serveurs applicatifs (VIP ${VIP})"
 
+# L'application ne termine pas sa réponse par un saut de ligne : on en ajoute
+# un, sinon les 20 noms d'hôte se collent sur une seule ligne.
 for _ in $(seq 1 20); do
-  curl -s --max-time 3 "http://${VIP}/info" | sed -n 's/.*"hote": *"\([^"]*\)".*/\1/p'
+  { curl -s --max-time 3 "http://${VIP}/info" || true; echo; } \
+    | sed -n 's/.*"hote": *"\([^"]*\)".*/\1/p'
 done > /tmp/v1_hotes.txt
 
 if [ ! -s /tmp/v1_hotes.txt ]; then
@@ -15,8 +18,11 @@ if [ ! -s /tmp/v1_hotes.txt ]; then
   exit 1
 fi
 
-echo "--- Distribution des 20 réponses ---"
+echo "--- Distribution des $(wc -l < /tmp/v1_hotes.txt | tr -d ' ') réponses ---"
 sort /tmp/v1_hotes.txt | uniq -c | sort -rn
+
+echo "--- Ordre des réponses ---"
+tr '\n' ' ' < /tmp/v1_hotes.txt; echo
 
 distincts=$(sort -u /tmp/v1_hotes.txt | wc -l | tr -d ' ')
 max=$(sort /tmp/v1_hotes.txt | uniq -c | awk '{print $1}' | sort -n | tail -1)
