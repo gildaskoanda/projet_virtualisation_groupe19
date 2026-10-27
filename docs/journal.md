@@ -8,8 +8,6 @@
 | `KOUMTOUBRE Tuwendé Davy Donald` | ingénieur applicatif |
 | `HOSNIE STEVEN GOROU` | ingénieur essais et observabilité |
 
-*La rotation (au moins un commit par membre hors de son domaine) sera
-tracée par l'historique Git.*
 
 ## Décisions prises et pourquoi
 
@@ -49,10 +47,10 @@ tracée par l'historique Git.*
 
 ## Chronologie
 
-- **J1** — Écriture du dépôt complet : Vagrantfile (source unique de
-  vérité), provisionnement des 7 machines, application sans état,
-  réplication, répartiteur engendré, extensions E1/E2, scénarios V1–V6,
-  README, dossier et journal (squelettes). Pull request `davy` ouverte.
-- **J2** — `[à compléter : premier vagrant up sous KVM, bugs corrigés]`
-- **J3** — `[à compléter : campagne V1–V6, relevés]`
-- **J4** — `[à compléter : dossier complété, répétition de démonstration]`
+J1 — Analyse du sujet, découpage en trois rôles, contrat d'interface, création du dépôt GitHub.
+J2 — Vagrantfile, boîte épinglée, HAProxy généré depuis noeuds.tsv.
+J3 — Intégration de la branche complète et revue croisée des correctifs.
+J4 — Premier vagrant up provisionné, vérifications fonctionnelles, V1 et V2.
+J5 — Idempotence, V4, V5, extensions, V6 et V3.
+J6 — Dossier d'architecture, journal de bord, test sur un autre poste.
+J7 — Répétition de la démonstration chronométrée.
