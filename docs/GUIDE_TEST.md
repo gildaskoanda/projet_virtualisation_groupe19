@@ -522,54 +522,27 @@ La deuxième commande doit afficher **uniquement** `.env.exemple`. Ne faites jam
 
 ## Récapitulatif
 
-
-
-
-| Exigence ou scénario | Commande ou preuve | Résultat attendu | Votre résultat | Fait |
-|---|---|---|---|---|
-| R1 reconstruction | `bash tests/v5_reconstruction.sh` | Plateforme fonctionnelle sans geste manuel | durée : environ 2 220 s (37 min) ; `/sante` à 200 | [x] |
-| R2 idempotence | partie 6 | Aucune différence avant/après | Empreintes et heures de démarrage identiques ; un bloc `pg_hba` par base ; 50 000 lignes ; `IDEMPOTENCE : OK` | [ ] |
-| R3 N paramétrable | `NB_APP=4` (V3) + `grep -c 'server app'` | 4 serveurs sans toucher au répartiteur | 4 lignes `server app` dans `haproxy.cfg` | [ ] |
-| R4 sonde de santé | V2 | App éjectée en moins de 5 s | `app1` éjectée par HAProxy (0 apparition sur 12 pendant la panne) ; période dégradée : environ 3 s | [x] |
-| R5 réplication | partie 5.1 | Ligne insérée sur bdd1 visible sur bdd2 | Ligne `999999\|Test R5\|D\|12.50\|t` lue sur bdd2 ; réplication `192.168.58.32\|streaming` | [ ] |
-| R6 bascule | V4 | Procédure exécutable et chronométrée | `/sante` à 503 puis 200 ; bdd2 devient primaire ; durée : 74 s | [x] |
-| R7 aucun secret | partie 5.6 | Seul `.env.exemple` versionné | Seul `.env.exemple` versionné ; aucun mot de passe dans le code ni dans l’historique de `.env` | [ ] |
-| R8 réseau privé | partie 5.5 | Un seul port exposé (lb1) | Une seule redirection de port : lb1, port 8080 vers port 80 ; PostgreSQL écoute sur `192.168.58.31:5432` | [ ] |
-| V1 répartition | `tests/v1_repartition.sh` | Écart inférieur à 20 % | app1 : 10 appels ; app2 : 10 appels ; écart : 0 % | [ ] |
-| V2 panne d'une app | `tests/v2_panne_app.sh` | Service disponible, dégradation inférieure à 5 s | 2 erreurs sur 200 requêtes ; latence max : environ 1,4 s ; période dégradée : environ 3 s ; verdict `ACCEPTABLE` | [x] |
-| V3 montée en charge | `tests/v3_charge.sh` | Débit mesuré pour N=2 et N=4 | N=2 : environ 780 req/s ; N=4 : environ 1 040 req/s (+33 %, CPU partagé entre les VM) | [x] |
-| V4 panne de la base | `tests/v4_bascule_bdd.sh` | 503 propre, puis bascule | 503 pendant la panne, puis bascule en 74 s ; `RÉSULTAT V4 : OK` | [x] |
-| V5 reconstruction | `tests/v5_reconstruction.sh` | `/sante` à 200 | durée : environ 2 220 s (37 min pour le socle) ; `/sante` à 200 après reconstruction | [x] |
-| V6 panne du répartiteur (E1) | `tests/v6_panne_lb.sh` | VIP joignable, interruption inférieure à 5 s | VIP portée par lb2 ; interruption annoncée comme nulle ou inférieure à 5 s | [ ] |
-| E2 supervision | Grafana (partie 8.4) | Débit visible pendant la charge, serveur qui disparaît pendant la panne | Toutes les cibles Prometheus sont `UP` ; débit visible pendant V3 ; pic d'environ 1 000 req/s | [x] |
-
-
-
-
-
-
-
-
-
 Reportez ici vos résultats réels (copiés depuis `docs/mesures/`), pour le dossier. **Ne notez que des valeurs mesurées.**
 
 | Exigence ou scénario | Commande ou preuve | Résultat attendu | Votre résultat | Fait |
 |---|---|---|---|---|
-| R1 reconstruction | `bash tests/v5_reconstruction.sh` | Plateforme fonctionnelle sans geste manuel | durée : ______ s | [ ] |
-| R2 idempotence | partie 6 | Aucune différence avant/après | | [ ] |
-| R3 N paramétrable | `NB_APP=4` (V3) + `grep -c 'server app'` | 4 serveurs sans toucher au répartiteur | | [ ] |
-| R4 sonde de santé | V2 | App éjectée en moins de 5 s | période dégradée : ______ s | [ ] |
-| R5 réplication | partie 5.1 | Ligne insérée sur bdd1 visible sur bdd2 | | [ ] |
-| R6 bascule | V4 | Procédure exécutable et chronométrée | durée : ______ s | [ ] |
-| R7 aucun secret | partie 5.6 | Seul `.env.exemple` versionné | | [ ] |
-| R8 réseau privé | partie 5.5 | Un seul port exposé (lb1) | | [ ] |
-| V1 répartition | `tests/v1_repartition.sh` | Écart inférieur à 20 % | écart : ______ % | [ ] |
-| V2 panne d'une app | `tests/v2_panne_app.sh` | Service disponible, dégradation inférieure à 5 s | erreurs : ______ ; latence max : ______ s | [ ] |
-| V3 montée en charge | `tests/v3_charge.sh` | Débit mesuré pour N=2 et N=4 | N=2 : ______ req/s ; N=4 : ______ req/s | [ ] |
-| V4 panne de la base | `tests/v4_bascule_bdd.sh` | 503 propre, puis bascule | durée de bascule : ______ s | [ ] |
-| V5 reconstruction | `tests/v5_reconstruction.sh` | `/sante` à 200 | durée : ______ s | [ ] |
-| V6 panne du répartiteur (E1) | `tests/v6_panne_lb.sh` | VIP joignable, interruption inférieure à 5 s | interruption : ______ s | [ ] |
-| E2 supervision | Grafana (partie 8.4) | Débit visible pendant la charge, serveur qui disparaît pendant la panne | captures : ______ | [ ] |
+| R1 reconstruction | `bash tests/v5_reconstruction.sh` | Plateforme fonctionnelle sans geste manuel | durée : environ 2 220 s (37 min) ; `/sante` à 200 | [x] |
+| R2 idempotence | partie 6 | Aucune différence avant/après | Empreintes et heures de démarrage identiques ; un bloc `pg_hba` par base ; 50 000 lignes ; `IDEMPOTENCE : OK` | [x] |
+| R3 N paramétrable | `NB_APP=4` (V3) + `grep -c 'server app'` | 4 serveurs sans toucher au répartiteur | 4 lignes `server app` dans `haproxy.cfg` | [x] |
+| R4 sonde de santé | V2 | App éjectée en moins de 5 s | `app1` éjectée par HAProxy (0 apparition sur 12 pendant la panne) ; période dégradée : environ 3 s | [x] |
+| R5 réplication | partie 5.1 | Ligne insérée sur bdd1 visible sur bdd2 | Ligne `999999\|Test R5\|D\|12.50\|t` lue sur bdd2 ; réplication `192.168.58.32\|streaming` | [x] |
+| R6 bascule | V4 | Procédure exécutable et chronométrée | `/sante` à 503 puis 200 ; bdd2 devient primaire ; durée : 74 s | [x] |
+| R7 aucun secret | partie 5.6 | Seul `.env.exemple` versionné | Seul `.env.exemple` versionné ; aucun mot de passe dans le code ni dans l’historique de `.env` | [x] |
+| R8 réseau privé | partie 5.5 | Un seul port exposé (lb1) | Une seule redirection de port : lb1, port 8080 vers port 80 ; PostgreSQL écoute sur `192.168.58.31:5432` | [x] |
+| V1 répartition | `tests/v1_repartition.sh` | Écart inférieur à 20 % | app1 : 10 appels ; app2 : 10 appels ; écart : 0 % | [x] |
+| V2 panne d'une app | `tests/v2_panne_app.sh` | Service disponible, dégradation inférieure à 5 s | 2 erreurs sur 200 requêtes ; latence max : environ 1,4 s ; période dégradée : environ 3 s ; verdict `ACCEPTABLE` | [x] |
+| V3 montée en charge | `tests/v3_charge.sh` | Débit mesuré pour N=2 et N=4 | N=2 : environ 780 req/s ; N=4 : environ 1 040 req/s (+33 %, CPU partagé entre les VM) | [x] |
+| V4 panne de la base | `tests/v4_bascule_bdd.sh` | 503 propre, puis bascule | 503 pendant la panne, puis bascule en 74 s ; `RÉSULTAT V4 : OK` | [x] |
+| V5 reconstruction | `tests/v5_reconstruction.sh` | `/sante` à 200 | durée : environ 2 220 s (37 min pour le socle) ; `/sante` à 200 après reconstruction | [x] |
+| V6 panne du répartiteur (E1) | `tests/v6_panne_lb.sh` | VIP joignable, interruption inférieure à 5 s | VIP portée par lb2 ; interruption annoncée comme nulle ou inférieure à 5 s | [x] |
+| E2 supervision | Grafana (partie 8.4) | Débit visible pendant la charge, serveur qui disparaît pendant la panne | Toutes les cibles Prometheus sont `UP` ; débit visible pendant V3 ; pic d'environ 1 000 req/s | [x] |
+
+
 
 ## Fin de session
 
