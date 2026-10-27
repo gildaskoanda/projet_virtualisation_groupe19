@@ -4,7 +4,7 @@
 
 | Membre | Rôle (cahier des charges) |
 |--------|---------------------------|
-| KOUMTOUBRE Tuwendé Davy Donald | assemblage général : Vagrantfile, provisionnement, répartiteur, bascule, scénarios |
+| KOANDA Gildas Shamir Noel | assemblage général : Vagrantfile, provisionnement, répartiteur, bascule, scénarios |
 | `KOUMTOUBRE Tuwendé Davy Donald` | ingénieur applicatif |
 | `HOSNIE STEVEN GOROU` | ingénieur essais et observabilité |
 
