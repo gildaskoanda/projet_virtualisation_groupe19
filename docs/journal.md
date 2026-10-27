@@ -5,9 +5,8 @@
 | Membre | Rôle (cahier des charges) |
 |--------|---------------------------|
 | VyDonald | assemblage général : Vagrantfile, provisionnement, répartiteur, bascule, scénarios |
-| `[membre 2]` | ingénieur applicatif |
-| `[membre 3]` | ingénieur données |
-| `[membre 4]` | ingénieur essais et observabilité |
+| `KOUMTOUBRE Tuwendé Davy Donald` | ingénieur applicatif |
+| `HOSNIE STEVEN GOROU` | ingénieur essais et observabilité |
 
 *La rotation (au moins un commit par membre hors de son domaine) sera
 tracée par l'historique Git.*
