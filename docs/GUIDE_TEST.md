@@ -526,7 +526,7 @@ La deuxième commande doit afficher **uniquement** `.env.exemple`. Ne faites jam
 
 
 Exigence ou scénario	Commande ou preuve	Résultat attendu	Votre résultat	Fait
-R1 reconstruction	bash tests/v5_reconstruction.sh	Plateforme fonctionnelle sans geste manuel ; /sante à 200	Durée du socle : environ 2 220 s (37 min) ; /sante à 200 après reconstruction	[x]
+R1 reconstruction	bash tests/v5_reconstruction.sh	Plateforme fonctionnelle sans geste manuel	Durée du socle : environ 2 220 s (37 min) ; /sante à 200 après reconstruction	[x]
 R2 idempotence	Partie 6 (diff avant/après)	Aucune différence avant/après	Empreintes et heures de démarrage identiques ; un bloc pg_hba par base ; 50 000 lignes ; IDEMPOTENCE : OK	[ ]
 R3 N paramétrable	NB_APP=4 (V3) + grep -c 'server app'	4 serveurs sans toucher au répartiteur	4 lignes server app dans haproxy.cfg	[ ]
 R4 sonde de santé	V2	App éjectée en moins de 5 s	app1 éjectée par HAProxy (0 apparition sur 12 pendant la panne) ; période dégradée : environ 3 s	[x]
@@ -540,9 +540,7 @@ V3 montée en charge	bash tests/v3_charge.sh	Débit mesuré pour N=2 et N=4	N=2 
 V4 panne de la base	bash tests/v4_bascule_bdd.sh	503 propre, puis bascule	503 pendant la panne, puis bascule en 74 s ; RÉSULTAT V4 : OK	[x]
 V5 reconstruction	bash tests/v5_reconstruction.sh	/sante à 200	/sante à 200 après reconstruction ; durée du socle : environ 37 min	[x]
 V6 panne du répartiteur (E1)	bash tests/v6_panne_lb.sh	VIP joignable ; interruption inférieure à 5 s	VIP portée par lb2 ; interruption annoncée comme nulle ou inférieure à 5 s	[ ]
-E2 supervision	Grafana (partie 8.4)	Débit visible pendant la charge ; serveur visible comme indisponible pendant la panne	Toutes les cibles Prometheus sont UP ; débit visible pendant V3 ; pic d'environ 1 000 req/s	[x]
-
-
+E2 supervision	Grafana (partie 8.4)	Débit visible pendant la charge ; serveur qui disparaît pendant la panne	Toutes les cibles Prometheus sont UP ; débit visible pendant V3 ; pic d'environ 1 000 req/s	[x]
 
 
 
