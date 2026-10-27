@@ -4,7 +4,7 @@
 
 | Membre | Rôle (cahier des charges) |
 |--------|---------------------------|
-| VyDonald | assemblage général : Vagrantfile, provisionnement, répartiteur, bascule, scénarios |
+| KOUMTOUBRE Tuwendé Davy Donald | assemblage général : Vagrantfile, provisionnement, répartiteur, bascule, scénarios |
 | `KOUMTOUBRE Tuwendé Davy Donald` | ingénieur applicatif |
 | `HOSNIE STEVEN GOROU` | ingénieur essais et observabilité |
 
