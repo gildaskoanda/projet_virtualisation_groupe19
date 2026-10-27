@@ -37,7 +37,7 @@ end
 def lire_env
   ecrire_env_si_absent
   valeurs = {}
-  contenu = File.read('.env')
+  contenu = File.read('.env', encoding: 'UTF-8')
   contenu.each_line do |ligne|
     ligne = ligne.strip
     next if ligne.empty? || ligne.start_with?('#')
@@ -71,6 +71,7 @@ GROUPE     = parametre('GROUPE', '3').to_i       # sous-réseau attribué : grou
 NB_APP     = parametre('NB_APP', '2').to_i       # nombre de serveurs applicatifs (R3)
 EXTENSIONS = parametre('EXTENSIONS', '1') == '1' # 0 = socle seul (lb2 et obs exclues)
 APP_PORT   = '3000'                              # port des serveurs applicatifs
+HOTE_PORT  = parametre('HOTE_PORT', '8080').to_i   # port du PC redirigé vers lb1 (R8) : à changer si 8080 est déjà pris
 
 abort '[resultats-bf] GROUPE doit etre compris entre 1 et 8 (plage VirtualBox 192.168.56.0-63.255)' unless (1..8).include?(GROUPE)
 abort '[resultats-bf] NB_APP doit etre compris entre 2 et 9' unless (2..9).include?(NB_APP)
@@ -142,7 +143,7 @@ Vagrant.configure('2') do |config|
 
       # R8 : seul le répartiteur principal expose un port vers l'hôte.
       if n[:nom] == 'lb1'
-        m.vm.network 'forwarded_port', guest: 80, host: 8080, host_ip: '127.0.0.1'
+        m.vm.network 'forwarded_port', guest: 80, host: HOTE_PORT, host_ip: '127.0.0.1'
       end
 
       m.vm.provider 'virtualbox' do |vb|
