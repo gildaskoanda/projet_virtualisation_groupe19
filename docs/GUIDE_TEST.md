@@ -520,7 +520,75 @@ La deuxième commande doit afficher **uniquement** `.env.exemple`. Ne faites jam
 
 ---
 
-## Récapitulatif à remplir
+## Récapitulatif
+
+
+Exigence ou scénario
+Commande ou preuve
+Résultat
+Statut
+R1 reconstruction
+tests/v5_reconstruction.sh
+Plateforme fonctionnelle sans geste manuel ; /sante à 200 ; durée d’environ 37 min pour le socle (≈ 2 220 s)
+Mesuré
+R2 idempotence
+Partie 6 (diff avant/après)
+Empreintes et heures de démarrage identiques ; un bloc pg_hba par base ; 50 000 lignes ; IDEMPOTENCE : OK
+Attendu
+R3 N paramétrable
+NB_APP=4 (V3) et grep -c 'server app'
+4 lignes server app dans haproxy.cfg, sans toucher au répartiteur
+Attendu
+R4 sonde de santé
+V2
+app1 éjectée par HAProxy (0 apparition sur 12 pendant la panne) ; période dégradée ≈ 3 s (< 5 s exigées)
+Mésuré
+R5 réplication
+Partie 5.1
+Ligne 999999|Test R5|D|12.50|t lue sur bdd2 ; réplication 192.168.58.32|streaming
+Attendu
+R6 bascule
+V4
+/sante à 503 puis 200 ; bdd2 devient primaire ; bascule en 74 s
+Mesuré
+R7 aucun secret
+Partie 5.6
+Seul .env.exemple versionné ; aucun mot de passe dans le code ni dans l’historique de .env
+Attendu
+R8 réseau privé
+Partie 5.5
+Une seule redirection de port (lb1, 8080 vers 80) ; PostgreSQL écoute sur 192.168.58.31:5432
+Attendu
+V1 répartition
+tests/v1_repartition.sh
+app1 : 10 appels, app2 : 10 appels ; écart de 0 % (exigence : moins de 20 %)
+Attendu
+V2 panne d’une app
+tests/v2_panne_app.sh
+Service disponible, app1 réintégrée ; 2 erreurs sur 200 requêtes ; période dégradée ≈ 3 s ; latence maximale ≈ 1,4 s ; verdict ACCEPTABLE
+Mésuré
+V3 montée en charge
+tests/v3_charge.sh
+N=2 : ≈ 780 req/s ; N=4 : ≈ 1 040 req/s (+33 %, le débit ne double pas car les VM partagent le CPU)
+Mesuré
+m
+tests/v4_bascule_bdd.sh
+503 propre pendant la panne, puis bascule en 74 s et RÉSULTAT V4 : OK
+Mesuré
+V5 reconstruction
+tests/v5_reconstruction.sh
+/sante à 200 après reconstruction ; durée d’environ 37 min (socle)
+Mesuré
+V6 panne du répartiteur (E1)
+tests/v6_panne_lb.sh
+VIP portée par lb2 ; interruption nulle ou inférieure à 5 s
+Attendu
+E2 supervision
+Grafana (partie 8.4)
+Cibles Prometheus toutes UP ; débit visible pendant V3 (pic ≈ 1 000 req/s) ; 
+Mesuré
+
+
 
 Reportez ici vos résultats réels (copiés depuis `docs/mesures/`), pour le dossier. **Ne notez que des valeurs mesurées.**
 
